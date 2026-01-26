@@ -1,95 +1,96 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, ActivityIndicator } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import * as Location from "expo-location";
 import { supabase } from "../../utils/supabase";
 
 interface Run {
-  id: number;
+  id: string;
   title: string;
   lat: number;
   lng: number;
+  distance_m: number;
 }
-//  TODO: rewrite all
+
+function regionToRadiusMeters(region: Region) {
+  return (region.latitudeDelta / 2) * 111_000;
+}
+
 export default function Map() {
+  const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
   const [runs, setRuns] = useState<Run[]>([]);
-  const isLoadingRef = useRef(false);
-  const lastRegionRef = useRef<Region | null>(null);
+  const loadingRef = useRef(false);
 
-  // Simple load function without caching
-  const loadRuns = async (region: Region) => {
-    if (isLoadingRef.current) return;
-
-    // Only load if region changed significantly
-    if (lastRegionRef.current &&
-      Math.abs(lastRegionRef.current.latitude - region.latitude) < 0.001 &&
-      Math.abs(lastRegionRef.current.longitude - region.longitude) < 0.001) {
-      return;
-    }
-
-    lastRegionRef.current = region;
-    isLoadingRef.current = true;
-
-    try {
-      const latDelta = region.latitudeDelta;
-      const lngDelta = region.longitudeDelta;
-
-      const { data, error } = await supabase
-        .from("runs")
-        .select("*")
-        .gte("lat", region.latitude - latDelta)
-        .lte("lat", region.latitude + latDelta)
-        .gte("lng", region.longitude - lngDelta)
-        .lte("lng", region.longitude + lngDelta)
-        .limit(100);
-
-      if (!error && data) {
-        setRuns(data as Run[]);
-      }
-    } catch (err) {
-      console.error("Error loading runs:", err);
-    } finally {
-      isLoadingRef.current = false;
-    }
-  };
-
-  // Use timeout instead of debounce
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  const handleRegionChangeComplete = (region: Region) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    timeoutRef.current = setTimeout(() => {
-      loadRuns(region);
-    }, 1000);
-  };
-
+  // --- Get GPS ---
   useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+    (async () => {
+      try {
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") return;
+
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+
+        setUserLoc({
+          lat: loc.coords.latitude,
+          lng: loc.coords.longitude,
+        });
+      } catch (e) {
+        console.error("Location error:", e);
       }
-    };
+    })();
   }, []);
+
+  // --- Load runs ---
+  const loadRuns = async (region: Region) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+
+    const radius = regionToRadiusMeters(region) * 1.5;
+
+    const { data, error } = await supabase.rpc("runs_nearby", {
+      lat: region.latitude,
+      lng: region.longitude,
+      radius_m: Math.round(radius),
+    });
+
+    if (!error && data) setRuns(data);
+    if (error) console.error(error.message);
+
+    loadingRef.current = false;
+  };
+
+  if (!userLoc) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <MapView
         style={StyleSheet.absoluteFillObject}
+        showsUserLocation
         initialRegion={{
-          latitude: 60.3913,
-          longitude: 5.3221,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
+          latitude: userLoc.lat,
+          longitude: userLoc.lng,
+          latitudeDelta: 0.03,
+          longitudeDelta: 0.03,
         }}
-        onRegionChangeComplete={handleRegionChangeComplete}
+        onRegionChangeComplete={loadRuns}
       >
         {runs.map((run) => (
           <Marker
             key={run.id}
             coordinate={{ latitude: run.lat, longitude: run.lng }}
             title={run.title}
+            description={`${Math.round(run.distance_m)} m away`}
           />
         ))}
       </MapView>
@@ -99,4 +100,5 @@ export default function Map() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });
