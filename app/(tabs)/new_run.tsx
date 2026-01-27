@@ -11,13 +11,23 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { supabase } from "../../utils/supabase";
 
 const THEME_COLOR = "#da7756";
-const RUNNING_DISTANCES = [1, 3, 5, 10, 15, 21.1, 42.2];
+const RUNNING_DISTANCES = [
+  1,
+  3,
+  5,
+  10,
+  15,
+  21.1,
+  42.2,
+  "Undecided",
+  "Custom...",
+];
 
 interface LocationPin {
   latitude: number;
@@ -31,7 +41,7 @@ export default function NewRun() {
   const [description, setDescription] = useState("");
   const [selectedDistance, setSelectedDistance] = useState<number | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<LocationPin | null>(
-    null
+    null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const mapRef = useRef<MapView>(null);
@@ -96,29 +106,19 @@ export default function NewRun() {
       style={styles.container}
     >
       <ScrollView
-        style={[
-          styles.content,
-          { backgroundColor: themeColors.background },
-        ]}
+        style={[styles.content, { backgroundColor: themeColors.background }]}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Header Title */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: themeColors.text }]}>
-            Sart ny joggetur
+            Make New Activity
           </Text>
         </View>
 
         {/* Title Input */}
         <View style={styles.section}>
-          <Text
-            style={[
-              styles.label,
-              { color: themeColors.text },
-            ]}
-          >
-            Run Title
-          </Text>
+          <Text style={[styles.label, { color: themeColors.text }]}>Title</Text>
           <TextInput
             style={[
               styles.input,
@@ -128,7 +128,7 @@ export default function NewRun() {
                 backgroundColor: isDark ? "#2a2a2a" : "#f5f5f5",
               },
             ]}
-            placeholder="Enter run title..."
+            placeholder="Enter title..."
             placeholderTextColor={isDark ? "#888" : "#999"}
             value={title}
             onChangeText={setTitle}
@@ -138,12 +138,7 @@ export default function NewRun() {
 
         {/* Description Input */}
         <View style={styles.section}>
-          <Text
-            style={[
-              styles.label,
-              { color: themeColors.text },
-            ]}
-          >
+          <Text style={[styles.label, { color: themeColors.text }]}>
             Description (Optional)
           </Text>
           <TextInput
@@ -169,12 +164,7 @@ export default function NewRun() {
 
         {/* Distance Selector */}
         <View style={styles.section}>
-          <Text
-            style={[
-              styles.label,
-              { color: themeColors.text },
-            ]}
-          >
+          <Text style={[styles.label, { color: themeColors.text }]}>
             Distance (km)
           </Text>
           <View style={styles.distanceGrid}>
@@ -188,14 +178,14 @@ export default function NewRun() {
                       selectedDistance === distance
                         ? THEME_COLOR
                         : isDark
-                        ? "#2a2a2a"
-                        : "#f5f5f5",
+                          ? "#2a2a2a"
+                          : "#f5f5f5",
                     borderColor:
                       selectedDistance === distance
                         ? THEME_COLOR
                         : isDark
-                        ? "#444"
-                        : "#ddd",
+                          ? "#444"
+                          : "#ddd",
                   },
                 ]}
                 onPress={() => setSelectedDistance(distance)}
@@ -221,12 +211,7 @@ export default function NewRun() {
 
         {/* Map Section */}
         <View style={styles.section}>
-          <Text
-            style={[
-              styles.label,
-              { color: themeColors.text },
-            ]}
-          >
+          <Text style={[styles.label, { color: themeColors.text }]}>
             Select Location
           </Text>
           <View style={styles.mapContainer}>
@@ -251,13 +236,9 @@ export default function NewRun() {
             </MapView>
           </View>
           {selectedLocation && (
-            <Text
-              style={[
-                styles.coordinatesText,
-                { color: themeColors.text },
-              ]}
-            >
-              Coordinates: {selectedLocation.latitude.toFixed(4)}, {selectedLocation.longitude.toFixed(4)}
+            <Text style={[styles.coordinatesText, { color: themeColors.text }]}>
+              Coordinates: {selectedLocation.latitude.toFixed(4)},{" "}
+              {selectedLocation.longitude.toFixed(4)}
             </Text>
           )}
         </View>
@@ -274,7 +255,7 @@ export default function NewRun() {
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>Legg til joggetur</Text>
+            <Text style={styles.submitButtonText}>Submit Run</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
