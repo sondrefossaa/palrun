@@ -1,4 +1,4 @@
-import { Colors } from "@/constants/theme";
+import { Colors, mainColor } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useRef, useState } from "react";
 import {
@@ -15,8 +15,6 @@ import {
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { supabase } from "../../utils/supabase";
-
-const THEME_COLOR = "#da7756";
 const RUNNING_DISTANCES = [
   1,
   3,
@@ -123,7 +121,7 @@ export default function NewRun() {
             style={[
               styles.input,
               {
-                borderColor: THEME_COLOR,
+                borderColor: mainColor,
                 color: themeColors.text,
                 backgroundColor: isDark ? "#2a2a2a" : "#f5f5f5",
               },
@@ -146,7 +144,7 @@ export default function NewRun() {
               styles.input,
               styles.textArea,
               {
-                borderColor: THEME_COLOR,
+                borderColor: mainColor,
                 color: themeColors.text,
                 backgroundColor: isDark ? "#2a2a2a" : "#f5f5f5",
               },
@@ -176,13 +174,13 @@ export default function NewRun() {
                   {
                     backgroundColor:
                       selectedDistance === distance
-                        ? THEME_COLOR
+                        ? mainColor
                         : isDark
                           ? "#2a2a2a"
                           : "#f5f5f5",
                     borderColor:
                       selectedDistance === distance
-                        ? THEME_COLOR
+                        ? mainColor
                         : isDark
                           ? "#444"
                           : "#ddd",
@@ -230,7 +228,7 @@ export default function NewRun() {
                 <Marker
                   coordinate={selectedLocation}
                   title="Selected Location"
-                  pinColor={THEME_COLOR}
+                  pinColor={mainColor}
                 />
               )}
             </MapView>
@@ -247,7 +245,7 @@ export default function NewRun() {
         <TouchableOpacity
           style={[
             styles.submitButton,
-            { backgroundColor: THEME_COLOR, opacity: isSubmitting ? 0.7 : 1 },
+            { backgroundColor: mainColor, opacity: isSubmitting ? 0.7 : 1 },
           ]}
           onPress={handleSubmit}
           disabled={isSubmitting}
