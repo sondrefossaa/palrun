@@ -12,7 +12,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Region } from "react-native-maps";
 
 import { Run, Filter } from "@/types";
-import { supabase } from "@/utils/supabase";
+import { supabase } from "@/lib/supabase";
 import RunDisplay from "@/components/run/run-display";
 import FilterModal from "@/components/filter-modal";
 import { mainColor } from "@/constants/theme";

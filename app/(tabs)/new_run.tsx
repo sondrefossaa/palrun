@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import { supabase } from "../../utils/supabase";
+import { supabase } from "../../lib/supabase";
 const RUNNING_DISTANCES = [
   1,
   3,

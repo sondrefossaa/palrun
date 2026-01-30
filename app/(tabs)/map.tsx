@@ -2,7 +2,7 @@ import { StyleSheet, View, ActivityIndicator } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
 import { useEffect, useRef, useState } from "react";
 import * as Location from "expo-location";
-import { supabase } from "../../utils/supabase";
+import { supabase } from "../../lib/supabase";
 
 interface Run {
   id: string;
@@ -18,7 +18,7 @@ function regionToRadiusMeters(region: Region) {
 
 export default function Map() {
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(
-    null
+    null,
   );
   const [runs, setRuns] = useState<Run[]>([]);
   const loadingRef = useRef(false);
@@ -27,8 +27,7 @@ export default function Map() {
   useEffect(() => {
     (async () => {
       try {
-        const { status } =
-          await Location.requestForegroundPermissionsAsync();
+        const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") return;
 
         const loc = await Location.getCurrentPositionAsync({
