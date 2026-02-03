@@ -1,0 +1,3 @@
+gjør prebuild npx expo prebuild
+./gradlew assembleRelease
+og ta android\app\build\outputs\apk\release til mobil
