@@ -20,16 +20,6 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="login-test"
-        options={{
-          title: "Login",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="index"
         options={{
           title: "Home",
@@ -62,6 +52,15 @@ export default function TabLayout() {
           title: "New run",
           tabBarIcon: ({ color }) => (
             <FontAwesome6 name="add" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="face" size={24} color={color} />
           ),
         }}
       />

@@ -7,17 +7,19 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { supabase } from "../lib/supabase";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { supabase } from "@/lib/supabase";
+import RecoverPassword from "./RecoverPassword";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [showRecoverPassword, setShowRecoverPassword] = useState(false);
 
   async function signInWithEmail() {
     if (!email || !password) {
@@ -67,7 +69,7 @@ export default function Auth() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaProvider style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -149,9 +151,17 @@ export default function Auth() {
           </View>
 
           {/* Forgot Password */}
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity
+            style={styles.forgotPassword}
+            onPress={() => setShowRecoverPassword(true)}
+          >
             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
+
+          {/* Recover Password */}
+          {showRecoverPassword && (
+            <RecoverPassword onClose={() => setShowRecoverPassword(false)} />
+          )}
         </View>
 
         {/* Footer */}
@@ -161,7 +171,7 @@ export default function Auth() {
           </Text>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
