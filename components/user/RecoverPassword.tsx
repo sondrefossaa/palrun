@@ -27,7 +27,7 @@ export default function RecoverPasswordModal({ visible, onClose }) {
       setMessage("");
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: "palrun://reset-password",
+        redirectTo: "Jog://reset-password",
       });
 
       if (error) throw error;

@@ -14,7 +14,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("runner@example.com");
   const [password, setPassword] = useState("password123");
   const [username, setUsername] = useState("Trail Blazer");
-  const [website, setWebsite] = useState("https://palrun.dev");
+  const [website, setWebsite] = useState("https://Jog.dev");
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [checkingSession, setCheckingSession] = useState(true);
