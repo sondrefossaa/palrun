@@ -10,6 +10,7 @@ export const supabase = createClient(
       storage: AsyncStorage,
       autoRefreshToken: true,
       persistSession: true,
+      flowType: "pkce",
       detectSessionInUrl: false,
       lock: processLock,
     },

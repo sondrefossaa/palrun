@@ -12,12 +12,14 @@ import {
 } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { supabase } from "@/lib/supabase";
+import { performGoogleSignIn } from "@/lib/googleAuth";
 import RecoverPassword from "./RecoverPassword";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [showRecoverPassword, setShowRecoverPassword] = useState(false);
 
@@ -66,6 +68,18 @@ export default function Auth() {
       );
     }
     setLoading(false);
+  }
+
+  async function signInWithGoogle() {
+    try {
+      setGoogleLoading(true);
+      const { error } = await performGoogleSignIn();
+      if (error) {
+        Alert.alert("Google Sign-In Error", error.message);
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
   }
 
   return (
@@ -150,6 +164,19 @@ export default function Auth() {
             <View style={styles.divider} />
           </View>
 
+          {/* Google Sign-In */}
+          <TouchableOpacity
+            style={[styles.button, styles.googleButton]}
+            onPress={signInWithGoogle}
+            disabled={loading || googleLoading}
+          >
+            {googleLoading ? (
+              <ActivityIndicator color="#1a1a1a" />
+            ) : (
+              <Text style={styles.googleButtonText}>Continue with Google</Text>
+            )}
+          </TouchableOpacity>
+
           {/* Forgot Password */}
           <TouchableOpacity
             style={styles.forgotPassword}
@@ -160,7 +187,10 @@ export default function Auth() {
 
           {/* Recover Password */}
           {showRecoverPassword && (
-            <RecoverPassword onClose={() => setShowRecoverPassword(false)} />
+            <RecoverPassword
+              visible={showRecoverPassword}
+              onClose={() => setShowRecoverPassword(false)}
+            />
           )}
         </View>
 
@@ -251,6 +281,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#007AFF",
   },
+  googleButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    flexDirection: "row",
+    gap: 12,
+  },
   buttonText: {
     color: "#fff",
     fontSize: 16,
@@ -258,6 +295,11 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  googleButtonText: {
+    color: "#1a1a1a",
     fontSize: 16,
     fontWeight: "600",
   },

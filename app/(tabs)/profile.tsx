@@ -23,6 +23,7 @@ import {
   mockSignOut,
   mockUpdateProfile,
 } from "@/lib/mockAuth";
+import TestAuth from "@/components/user/TestAuth";
 
 export default function ProfileScreen() {
   const [supabaseSession, setSupabaseSession] = useState<Session | null>(null);
@@ -171,7 +172,7 @@ export default function ProfileScreen() {
             <Text style={styles.description}>
               Have real credentials? Sign in below to sync with Supabase.
             </Text>
-            <Auth />
+            <TestAuth />
           </View>
         ))}
 

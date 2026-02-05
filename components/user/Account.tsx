@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Session } from "@supabase/supabase-js";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 export default function Account({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
@@ -176,7 +177,19 @@ export default function Account({ session }: { session: Session }) {
         {/* Sign Out Button */}
         <TouchableOpacity
           style={[styles.button, styles.secondaryButton]}
-          onPress={() => supabase.auth.signOut()}
+          onPress={async () => {
+            try {
+              // Sign out of Google
+              await GoogleSignin.signOut();
+
+              // Sign out of Supabase
+              await supabase.auth.signOut();
+
+              console.log("Signed out successfully");
+            } catch (error) {
+              console.error("Sign out error:", error);
+            }
+          }}
           disabled={loading}
         >
           <Text style={styles.secondaryButtonText}>Sign Out</Text>
