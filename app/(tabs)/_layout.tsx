@@ -49,7 +49,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="new_run"
         options={{
-          title: "New run",
+          title: "Social",
           tabBarIcon: ({ color }) => (
             <FontAwesome6 name="add" size={24} color={color} />
           ),
