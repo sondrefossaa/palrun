@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -7,190 +7,330 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  ActivityIndicator,
+  StatusBar,
 } from "react-native";
-import { useState } from "react";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useThemeColor } from "@/hooks/use-theme-color";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useThemeColor } from "@/hooks/use-theme-color";
+
+/* ---------- TYPES ---------- */
+
+type ProfileStats = {
+  id: string;
+  full_name: string;
+  avatar_url: string;
+  location: string;
+  short_desc: string;
+  long_description: string;
+  age: number;
+};
+
+/* ---------- MAIN COMPONENT ---------- */
+
 export default function Profile() {
   const { user } = useAuth();
   const [canEditDesc, setCanEditDesc] = useState(false);
-  // Create dynamic styles using the hook
-  const dynamicStyles = useDynamicStyles();
+  const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
+  const styles = useDynamicStyles();
+
+  useEffect(() => {
+    const fetchProfileStats = async () => {
+      try {
+        if (!user?.id) return;
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        if (error) throw error;
+        setProfileStats(data);
+      } catch (error) {
+        console.error("Supabase Error:", error);
+      }
+    };
+    fetchProfileStats();
+  }, [user?.id]);
+
+  if (!profileStats) {
+    return (
+      <View
+        style={[
+          styles.safe,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#2D5A27" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaProvider>
-      <ScrollView>
-        <View style={dynamicStyles.mainContainer}>
-          <View style={dynamicStyles.topContainer}>
-            <View style={dynamicStyles.topLeftContainer}>
-              <Text style={dynamicStyles.greetingText}>
-                {"Hello "}
-                <Text style={dynamicStyles.nameText}>
-                  {user.user_metadata.name.split(" ")[0]}
-                </Text>
-              </Text>
-            </View>
-            <View style={dynamicStyles.topRightContainer}>
-              <Image
-                source={{ uri: user.user_metadata.avatar_url }}
-                style={dynamicStyles.profilePicture}
-              />
-            </View>
-          </View>
-          {/*<View>
-            <Text>
-              undertitle
-            </Text>
-          </View>*/}
-          <View style={dynamicStyles.highlightsContainer}>
-            <View style={dynamicStyles.highlight}>
-              <MaterialCommunityIcons
-                name="map-marker-distance"
-                size={24}
-                color="green"
-              />
-              <Text style={dynamicStyles.highlightValue}>5k</Text>
-            </View>
-            <View style={dynamicStyles.highlight}>
-              <MaterialIcons name="speed" size={24} color="black" />
-              <Text style={dynamicStyles.highlightValue}>5min/km</Text>
-            </View>
-            <View style={dynamicStyles.highlight}>
-              <Text style={dynamicStyles.highlightValue}>casual</Text>
-            </View>
-          </View>
-          <View style={dynamicStyles.midContainer}>
-            <View style={dynamicStyles.descriptionContainer}>
-              <TouchableOpacity style={dynamicStyles.editButton}>
-                <FontAwesome6 name="pen" size={24} color="black" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+      >
+        {/* TOP GREEN HEADER SECTION */}
+        <View style={styles.headerBackground}>
+          <SafeAreaView>
+            <View style={styles.headerTopActions}>
+              <TouchableOpacity style={styles.iconButton}>
+                <AntDesign name="setting" size={22} color="white" />
               </TouchableOpacity>
-              <Text style={dynamicStyles.descriptionTitle}>
-                <AntDesign name="exclamation-circle" size={24} color="black" />{" "}
-                About me
-              </Text>
-              <TextInput
-                style={dynamicStyles.descriptionText}
-                editable={canEditDesc}
-                placeholder="Write a short description about yourself"
-              >
-                {user.user_metadata.description}
-              </TextInput>
             </View>
+          </SafeAreaView>
+        </View>
+
+        {/* OVERLAPPING AVATAR */}
+        <View style={styles.avatarWrapper}>
+          <Image
+            source={{
+              uri: profileStats.avatar_url || "https://via.placeholder.com/150",
+            }}
+            style={styles.avatar}
+          />
+        </View>
+
+        {/* MAIN PROFILE CONTENT */}
+        <View style={styles.mainContainer}>
+          <Text style={styles.name}>{profileStats.full_name}</Text>
+          <Text style={styles.shortDesc}>{profileStats.short_desc}</Text>
+
+          {/* RUNNING VIBE TAGS */}
+          {/*<View style={styles.tagContainer}>
+            <VibeTag label="Chill" />
+            <VibeTag label="Social" />
+            <VibeTag label="Morning" />
+          </View>*/}
+
+          {/* STATS CARD */}
+          <View style={styles.statsCard}>
+            <StatColumn label="Location" value={profileStats.location} />
+            <View style={styles.verticalDivider} />
+            <StatColumn
+              label="Age"
+              value={profileStats.age?.toString() || "--"}
+            />
+            <View style={styles.verticalDivider} />
+            <StatColumn label="Runs" value="42" />
+          </View>
+
+          {/* ABOUT SECTION */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>About me</Text>
+              <TouchableOpacity onPress={() => setCanEditDesc(!canEditDesc)}>
+                <AntDesign name="edit" size={18} color="#9CA3AF" />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={[styles.aboutInput, canEditDesc && styles.editingInput]}
+              editable={canEditDesc}
+              multiline
+              placeholder="Tell others about your running style..."
+              placeholderTextColor="#9CA3AF"
+              value={profileStats.long_description}
+              onChangeText={(text) =>
+                setProfileStats({ ...profileStats, long_description: text })
+              }
+              scrollEnabled={false}
+            />
+          </View>
+
+          {/* RECENT ACTIVITY PLACEHOLDER */}
+          <View style={[styles.card, { marginBottom: 40 }]}>
+            <Text style={styles.cardTitle}>Last Social Run</Text>
+            <Text style={[styles.mutedText, { marginTop: 8 }]}>
+              5km Loop with Alex • Tuesday Morning
+            </Text>
           </View>
         </View>
       </ScrollView>
-    </SafeAreaProvider>
+    </View>
   );
 }
 
-// Custom hook that uses useThemeColor
+/* ---------- HELPER COMPONENTS ---------- */
+
+function VibeTag({ label }: { label: string }) {
+  const styles = useDynamicStyles();
+  return (
+    <View style={styles.vibeTag}>
+      <Text style={styles.vibeTagText}>{label}</Text>
+    </View>
+  );
+}
+
+function StatColumn({ label, value }: { label: string; value: string }) {
+  const styles = useDynamicStyles();
+  return (
+    <View style={styles.statColumn}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+/* ---------- STYLES ---------- */
+
 function useDynamicStyles() {
-  const backgroundColor = useThemeColor({}, "background");
-  const textColor = useThemeColor({}, "text");
-  const tintColor = useThemeColor({}, "tint");
+  const brandGreen = "#2D5A27"; // Deep, sporty green
+  const lightBg = "#F9FAFB"; // Clean off-white/gray
+  const surface = "#FFFFFF"; // Pure white for cards
+  const textMain = "#111827";
+  const textMuted = "#6B7280";
 
-  const styles = StyleSheet.create({
-    highlightsContainer: {
-      backgroundColor: backgroundColor,
-      height: 100,
-      borderColor: "black",
-      borderWidth: 1,
-      borderRadius: 10,
-      flexDirection: "row",
-    },
-    highlight: {
+  return StyleSheet.create({
+    container: {
       flex: 1,
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-      borderRightWidth: 1,
-      borderRightColor: "black",
+      backgroundColor: lightBg,
     },
-    highlightTitle: {
-      maxWidth: 100,
-      textAlign: "center",
-      color: textColor,
-      fontSize: 16,
-      fontWeight: "bold",
-    },
-    highlightValue: {
-      color: textColor,
-      fontSize: 16,
-    },
-    editButton: {
-      position: "absolute",
-      right: 10,
-      top: 10,
-    },
-    midContainer: {
-      backgroundColor: backgroundColor,
-      //TODO: change this to be dependant on text size
-      flex: 0.5,
-      marginTop: 50,
-      borderColor: "black",
-      borderWidth: 1,
-      borderRadius: 10,
-      padding: 10,
-      flexDirection: "column",
-    },
-    descriptionTitle: {
-      color: textColor,
-      fontSize: 16,
-      alignSelf: "stretch",
-      fontWeight: "bold",
-    },
-    descriptionText: {
-      color: textColor,
-      fontSize: 16,
-    },
-    descriptionContainer: {
-      backgroundColor: "red",
+    safe: {
       flex: 1,
     },
-
-    mainContainer: {
-      backgroundColor: backgroundColor,
+    scroll: {
       flex: 1,
     },
-
-    greetingText: {
-      color: textColor,
-      fontSize: 16,
-      fontWeight: "bold",
+    scrollContent: {
+      paddingBottom: 40,
     },
-    nameText: {
-      color: "green",
-      fontSize: 16,
-      fontWeight: "bold",
+    headerBackground: {
+      backgroundColor: brandGreen,
+      height: 160,
+      width: "100%",
     },
-    topContainer: {
-      borderColor: tintColor,
-      borderWidth: 1,
-      borderRadius: 10,
-      padding: 10,
+    headerTopActions: {
       flexDirection: "row",
+      justifyContent: "flex-end",
       paddingHorizontal: 20,
-      marginTop: 30,
-      marginHorizontal: 15,
+      paddingTop: 10,
+    },
+    iconButton: {
+      padding: 8,
+      backgroundColor: "rgba(255,255,255,0.15)",
+      borderRadius: 20,
+    },
+    avatarWrapper: {
+      alignItems: "center",
+      marginTop: -60, // The 50% overlap logic
+      zIndex: 10,
+    },
+    avatar: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      borderWidth: 6,
+      borderColor: lightBg, // Matches the page background
+      backgroundColor: surface,
+    },
+    mainContainer: {
+      paddingHorizontal: 24,
+      paddingTop: 16,
+      alignItems: "center",
+    },
+    name: {
+      fontSize: 26,
+      fontWeight: "700",
+      color: textMain,
+      letterSpacing: -0.5,
+    },
+    shortDesc: {
+      fontSize: 16,
+      color: textMuted,
+      marginTop: 4,
+      textAlign: "center",
+    },
+    tagContainer: {
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 16,
+    },
+    vibeTag: {
+      backgroundColor: "#E8F0E6",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+    },
+    vibeTagText: {
+      color: brandGreen,
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    statsCard: {
+      flexDirection: "row",
+      backgroundColor: surface,
+      borderRadius: 24,
+      paddingVertical: 20,
+      marginTop: 24,
+      width: "100%",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.05,
+      shadowRadius: 12,
+      elevation: 3,
+    },
+    statColumn: {
+      flex: 1,
+      alignItems: "center",
+    },
+    statValue: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: brandGreen,
+    },
+    statLabel: {
+      fontSize: 11,
+      color: textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.8,
+      marginTop: 2,
+    },
+    verticalDivider: {
+      width: 1,
+      height: "100%",
+      backgroundColor: "#F3F4F6",
+    },
+    card: {
+      backgroundColor: surface,
+      borderRadius: 24,
+      padding: 20,
+      marginTop: 16,
+      width: "100%",
+    },
+    cardHeader: {
+      flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      height: 80,
+      marginBottom: 12,
     },
-    topRightContainer: {},
-    topLeftContainer: {},
-
-    profilePicture: {
-      borderRadius: 10,
-      width: 50,
-      height: 50,
-      borderWidth: 2,
-      borderColor: tintColor,
+    cardTitle: {
+      fontSize: 17,
+      fontWeight: "700",
+      color: textMain,
+    },
+    aboutInput: {
+      fontSize: 15,
+      color: "#374151",
+      lineHeight: 22,
+      minHeight: 80,
+      textAlignVertical: "top",
+    },
+    editingInput: {
+      backgroundColor: "#FBFBFB",
+      borderRadius: 12,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: "#E5E7EB",
+    },
+    mutedText: {
+      fontSize: 14,
+      color: textMuted,
     },
   });
-
-  return styles;
 }
