@@ -122,50 +122,23 @@ export default function Profile() {
 
           {/* ABOUT SECTION */}
           <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>About me</Text>
-              <TouchableOpacity onPress={() => setCanEditDesc(!canEditDesc)}>
-                <AntDesign name="edit" size={18} color="#9CA3AF" />
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={[styles.aboutInput, canEditDesc && styles.editingInput]}
-              editable={canEditDesc}
-              multiline
-              placeholder="Tell others about your running style..."
-              placeholderTextColor="#9CA3AF"
-              value={profileStats.long_description}
-              onChangeText={(text) =>
-                setProfileStats({ ...profileStats, long_description: text })
-              }
-              scrollEnabled={false}
-            />
-          </View>
-
-          {/* RECENT ACTIVITY PLACEHOLDER */}
-          <View style={[styles.card, { marginBottom: 40 }]}>
-            <Text style={styles.cardTitle}>Last Social Run</Text>
-            <Text style={[styles.mutedText, { marginTop: 8 }]}>
-              5km Loop with Alex • Tuesday Morning
+            <Text style={styles.aboutInput}>
+              {profileStats.long_description || "Edit about text in settings"}
             </Text>
           </View>
         </View>
       </ScrollView>
+      {/*EDIT AND LOGOUT BUTTON  */}
+      <View style={styles.bottomContainer}>
+        <TouchableOpacity style={styles.editProfileButton}>
+          <Text style={styles.bottomText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 /* ---------- HELPER COMPONENTS ---------- */
-
-function VibeTag({ label }: { label: string }) {
-  const styles = useDynamicStyles();
-  return (
-    <View style={styles.vibeTag}>
-      <Text style={styles.vibeTagText}>{label}</Text>
-    </View>
-  );
-}
 
 function StatColumn({ label, value }: { label: string; value: string }) {
   const styles = useDynamicStyles();
@@ -180,13 +153,32 @@ function StatColumn({ label, value }: { label: string; value: string }) {
 /* ---------- STYLES ---------- */
 
 function useDynamicStyles() {
-  const brandGreen = "#2D5A27"; // Deep, sporty green
-  const lightBg = "#F9FAFB"; // Clean off-white/gray
-  const surface = "#FFFFFF"; // Pure white for cards
-  const textMain = "#111827";
+  const brandGreen = "#2ECC71";
+  const lightBg = "#F7F7F7";
+  const surface = "#FFFFFF";
+  const textMain = "#1A1A1A";
   const textMuted = "#6B7280";
-
+  const badRed = "red";
   return StyleSheet.create({
+    bottomText: {
+      color: surface,
+      fontSize: 16,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    bottomContainer: {
+      paddingHorizontal: 24,
+      position: "absolute",
+      bottom: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    editProfileButton: {
+      flex: 1,
+      backgroundColor: brandGreen,
+      borderRadius: 8,
+      padding: 25,
+    },
     container: {
       flex: 1,
       backgroundColor: lightBg,
@@ -201,8 +193,7 @@ function useDynamicStyles() {
       paddingBottom: 40,
     },
     headerBackground: {
-      backgroundColor: brandGreen,
-      height: 160,
+      height: 80,
       width: "100%",
     },
     headerTopActions: {
@@ -213,8 +204,11 @@ function useDynamicStyles() {
     },
     iconButton: {
       padding: 8,
-      backgroundColor: "rgba(255,255,255,0.15)",
+      backgroundColor: "gray",
       borderRadius: 20,
+      position: "absolute",
+      top: 10,
+      right: 20,
     },
     avatarWrapper: {
       alignItems: "center",
@@ -251,29 +245,19 @@ function useDynamicStyles() {
       gap: 8,
       marginTop: 16,
     },
-    vibeTag: {
-      backgroundColor: "#E8F0E6",
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-    },
-    vibeTagText: {
-      color: brandGreen,
-      fontSize: 13,
-      fontWeight: "600",
-    },
+
     statsCard: {
       flexDirection: "row",
-      backgroundColor: surface,
+      backgroundColor: lightBg,
       borderRadius: 24,
       paddingVertical: 20,
       marginTop: 24,
       width: "100%",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.05,
-      shadowRadius: 12,
-      elevation: 3,
+      // shadowColor: "#000",
+      // shadowOffset: { width: 0, height: 4 },
+      // shadowOpacity: 0.05,
+      // shadowRadius: 12,
+      // elevation: 3,
     },
     statColumn: {
       flex: 1,
@@ -282,7 +266,7 @@ function useDynamicStyles() {
     statValue: {
       fontSize: 18,
       fontWeight: "700",
-      color: brandGreen,
+      color: "666B6A",
     },
     statLabel: {
       fontSize: 11,
