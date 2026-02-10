@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { useThemeColor } from "@/hooks/use-theme-color";
+import { useRouter } from "expo-router";
 
 /* ---------- TYPES ---------- */
 
@@ -24,7 +24,7 @@ type ProfileStats = {
   avatar_url: string;
   location: string;
   short_desc: string;
-  long_description: string;
+  long_desc: string;
   age: number;
 };
 
@@ -35,6 +35,7 @@ export default function Profile() {
   const [canEditDesc, setCanEditDesc] = useState(false);
   const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
   const styles = useDynamicStyles();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProfileStats = async () => {
@@ -79,7 +80,10 @@ export default function Profile() {
         <View style={styles.headerBackground}>
           <SafeAreaView>
             <View style={styles.headerTopActions}>
-              <TouchableOpacity style={styles.iconButton}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => router.push("/settings")}
+              >
                 <AntDesign name="setting" size={22} color="white" />
               </TouchableOpacity>
             </View>
@@ -123,14 +127,17 @@ export default function Profile() {
           {/* ABOUT SECTION */}
           <View style={styles.card}>
             <Text style={styles.aboutInput}>
-              {profileStats.long_description || "Edit about text in settings"}
+              {profileStats.long_desc || "Edit about text in settings"}
             </Text>
           </View>
         </View>
       </ScrollView>
       {/*EDIT AND LOGOUT BUTTON  */}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity style={styles.editProfileButton}>
+        <TouchableOpacity
+          style={styles.editProfileButton}
+          onPress={() => router.push("/settings")}
+        >
           <Text style={styles.bottomText}>Edit</Text>
         </TouchableOpacity>
       </View>
@@ -153,7 +160,7 @@ function StatColumn({ label, value }: { label: string; value: string }) {
 /* ---------- STYLES ---------- */
 
 function useDynamicStyles() {
-  const brandGreen = "#2ECC71";
+  const brandGreen = "#DA7756";
   const lightBg = "#F7F7F7";
   const surface = "#FFFFFF";
   const textMain = "#1A1A1A";
@@ -253,11 +260,6 @@ function useDynamicStyles() {
       paddingVertical: 20,
       marginTop: 24,
       width: "100%",
-      // shadowColor: "#000",
-      // shadowOffset: { width: 0, height: 4 },
-      // shadowOpacity: 0.05,
-      // shadowRadius: 12,
-      // elevation: 3,
     },
     statColumn: {
       flex: 1,
@@ -304,13 +306,6 @@ function useDynamicStyles() {
       lineHeight: 22,
       minHeight: 80,
       textAlignVertical: "top",
-    },
-    editingInput: {
-      backgroundColor: "#FBFBFB",
-      borderRadius: 12,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: "#E5E7EB",
     },
     mutedText: {
       fontSize: 14,
