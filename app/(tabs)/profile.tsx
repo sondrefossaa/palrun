@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -6,15 +6,25 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   ActivityIndicator,
   StatusBar,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { useFocusEffect } from "@react-navigation/native";
+
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useRouter } from "expo-router";
+
+/* ---------- CONSTANTS ---------- */
+
+const { width } = Dimensions.get("window");
+
+const AVATAR_SIZE = 160;
+const BUBBLE_SIZE = 100;
+const ARC_RADIUS = 110; // unchanged
 
 /* ---------- TYPES ---------- */
 
@@ -32,54 +42,63 @@ type ProfileStats = {
 
 export default function Profile() {
   const { user } = useAuth();
-  const [canEditDesc, setCanEditDesc] = useState(false);
   const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
   const styles = useDynamicStyles();
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchProfileStats = async () => {
-      try {
-        if (!user?.id) return;
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        if (error) throw error;
-        setProfileStats(data);
-      } catch (error) {
-        console.error("Supabase Error:", error);
-      }
-    };
-    fetchProfileStats();
+  const fetchProfileStats = useCallback(async () => {
+    if (!user?.id) return;
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (data) {
+      setProfileStats(data as ProfileStats);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchProfileStats();
+  }, [fetchProfileStats, user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfileStats();
+    }, [fetchProfileStats]),
+  );
 
   if (!profileStats) {
     return (
-      <View
-        style={[
-          styles.safe,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        <ActivityIndicator size="large" color="#2D5A27" />
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#DA7756" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        bounces={false}
-      >
-        {/* TOP GREEN HEADER SECTION */}
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
+
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* HEADER */}
         <View style={styles.headerBackground}>
-          <SafeAreaView>
+          <SafeAreaView edges={["top"]}>
             <View style={styles.headerTopActions}>
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.headerName}>{profileStats.full_name}</Text>
+                <Text style={styles.headerLocation}>
+                  {profileStats.location}
+                </Text>
+              </View>
+
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => router.push("/settings")}
@@ -90,67 +109,77 @@ export default function Profile() {
           </SafeAreaView>
         </View>
 
-        {/* OVERLAPPING AVATAR */}
-        <View style={styles.avatarWrapper}>
+        {/* PROFILE SECTION */}
+        <View style={styles.profileSection}>
           <Image
+            key={profileStats.avatar_url}
             source={{
               uri: profileStats.avatar_url || "https://via.placeholder.com/150",
             }}
             style={styles.avatar}
           />
-        </View>
 
-        {/* MAIN PROFILE CONTENT */}
-        <View style={styles.mainContainer}>
-          <Text style={styles.name}>{profileStats.full_name}</Text>
-          <Text style={styles.shortDesc}>{profileStats.short_desc}</Text>
+          {/* ARC STAT BUBBLES */}
+          <View style={styles.arcContainer}>
+            <StatBubble
+              label="Location"
+              value={profileStats.location}
+              style={{
+                transform: [{ translateX: -ARC_RADIUS }, { translateY: 25 }],
+              }}
+            />
 
-          {/* RUNNING VIBE TAGS */}
-          {/*<View style={styles.tagContainer}>
-            <VibeTag label="Chill" />
-            <VibeTag label="Social" />
-            <VibeTag label="Morning" />
-          </View>*/}
-
-          {/* STATS CARD */}
-          <View style={styles.statsCard}>
-            <StatColumn label="Location" value={profileStats.location} />
-            <View style={styles.verticalDivider} />
-            <StatColumn
+            <StatBubble
               label="Age"
               value={profileStats.age?.toString() || "--"}
+              style={{
+                transform: [{ translateY: 55 }],
+              }}
             />
-            <View style={styles.verticalDivider} />
-            <StatColumn label="Runs" value="42" />
-          </View>
 
-          {/* ABOUT SECTION */}
+            <StatBubble
+              label="Runs"
+              value="42"
+              style={{
+                transform: [{ translateX: ARC_RADIUS }, { translateY: 25 }],
+              }}
+            />
+          </View>
+        </View>
+
+        {/* CONTENT */}
+        <View style={styles.mainContainer}>
           <View style={styles.card}>
-            <Text style={styles.aboutInput}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.aboutHeader}>About me</Text>
+              <AntDesign name="idcard" size={18} color="#DA7756" />
+            </View>
+
+            <Text style={styles.aboutText}>
               {profileStats.long_desc || "Edit about text in settings"}
             </Text>
           </View>
         </View>
       </ScrollView>
-      {/*EDIT AND LOGOUT BUTTON  */}
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity
-          style={styles.editProfileButton}
-          onPress={() => router.push("/settings")}
-        >
-          <Text style={styles.bottomText}>Edit</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
 
-/* ---------- HELPER COMPONENTS ---------- */
+/* ---------- STAT BUBBLE ---------- */
 
-function StatColumn({ label, value }: { label: string; value: string }) {
+function StatBubble({
+  label,
+  value,
+  style,
+}: {
+  label: string;
+  value: string;
+  style?: any;
+}) {
   const styles = useDynamicStyles();
+
   return (
-    <View style={styles.statColumn}>
+    <View style={[styles.statBubble, style]}>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -164,152 +193,142 @@ function useDynamicStyles() {
   const lightBg = "#F7F7F7";
   const surface = "#FFFFFF";
   const textMain = "#1A1A1A";
-  const textMuted = "#6B7280";
-  const badRed = "red";
+
   return StyleSheet.create({
-    bottomText: {
-      color: surface,
-      fontSize: 16,
-      fontWeight: "bold",
-      textAlign: "center",
-    },
-    bottomContainer: {
-      paddingHorizontal: 24,
-      position: "absolute",
-      bottom: 10,
+    cardHeader: {
       flexDirection: "row",
+      alignItems: "center",
       justifyContent: "space-between",
+      marginBottom: 12,
     },
-    editProfileButton: {
-      flex: 1,
-      backgroundColor: brandGreen,
-      borderRadius: 8,
-      padding: 25,
+
+    aboutHeader: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: "#1A1A1A",
     },
+
     container: {
       flex: 1,
       backgroundColor: lightBg,
     },
-    safe: {
+
+    loader: {
       flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
     },
-    scroll: {
-      flex: 1,
-    },
-    scrollContent: {
-      paddingBottom: 40,
-    },
+
+    /* HEADER */
     headerBackground: {
-      height: 80,
-      width: "100%",
+      height: 160,
+      backgroundColor: brandGreen,
     },
+
     headerTopActions: {
       flexDirection: "row",
-      justifyContent: "flex-end",
+      justifyContent: "space-between",
+      alignItems: "center",
       paddingHorizontal: 20,
       paddingTop: 10,
     },
-    iconButton: {
-      padding: 8,
-      backgroundColor: "gray",
-      borderRadius: 20,
-      position: "absolute",
-      top: 10,
-      right: 20,
-    },
-    avatarWrapper: {
-      alignItems: "center",
-      marginTop: -60, // The 50% overlap logic
-      zIndex: 10,
-    },
-    avatar: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      borderWidth: 6,
-      borderColor: lightBg, // Matches the page background
-      backgroundColor: surface,
-    },
-    mainContainer: {
-      paddingHorizontal: 24,
-      paddingTop: 16,
-      alignItems: "center",
-    },
-    name: {
-      fontSize: 26,
-      fontWeight: "700",
-      color: textMain,
-      letterSpacing: -0.5,
-    },
-    shortDesc: {
-      fontSize: 16,
-      color: textMuted,
-      marginTop: 4,
-      textAlign: "center",
-    },
-    tagContainer: {
-      flexDirection: "row",
-      gap: 8,
-      marginTop: 16,
+
+    headerTextContainer: {
+      flex: 1,
+      justifyContent: "center",
     },
 
-    statsCard: {
-      flexDirection: "row",
-      backgroundColor: lightBg,
-      borderRadius: 24,
-      paddingVertical: 20,
-      marginTop: 24,
-      width: "100%",
-    },
-    statColumn: {
-      flex: 1,
-      alignItems: "center",
-    },
-    statValue: {
-      fontSize: 18,
+    headerName: {
+      color: "white",
+      fontSize: 20,
       fontWeight: "700",
-      color: "666B6A",
     },
-    statLabel: {
-      fontSize: 11,
-      color: textMuted,
-      textTransform: "uppercase",
-      letterSpacing: 0.8,
+
+    headerLocation: {
+      color: "rgba(255,255,255,0.85)",
+      fontSize: 14,
       marginTop: 2,
     },
-    verticalDivider: {
-      width: 1,
-      height: "100%",
-      backgroundColor: "#F3F4F6",
+
+    iconButton: {
+      padding: 10,
+      backgroundColor: "rgba(255,255,255,0.2)",
+      borderRadius: 30,
     },
+
+    /* PROFILE */
+    profileSection: {
+      alignItems: "center",
+      marginTop: -75,
+      marginBottom: 110,
+    },
+
+    avatar: {
+      width: AVATAR_SIZE,
+      height: AVATAR_SIZE,
+      borderRadius: AVATAR_SIZE / 2,
+      borderWidth: 6,
+      borderColor: lightBg,
+      backgroundColor: surface,
+      zIndex: 10,
+    },
+
+    arcContainer: {
+      position: "absolute",
+      bottom: 0,
+      width: width,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    statBubble: {
+      position: "absolute",
+      width: BUBBLE_SIZE,
+      height: BUBBLE_SIZE,
+      borderRadius: BUBBLE_SIZE / 2,
+      backgroundColor: brandGreen,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 5,
+      borderColor: "white",
+      shadowColor: "#000",
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+
+    statValue: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: "white",
+    },
+
+    statLabel: {
+      fontSize: 10,
+      color: "white",
+      marginTop: 2,
+    },
+
+    /* CONTENT */
+    mainContainer: {
+      paddingHorizontal: 24,
+      alignItems: "center",
+    },
+
     card: {
       backgroundColor: surface,
       borderRadius: 24,
       padding: 20,
-      marginTop: 16,
+      marginTop: 24,
       width: "100%",
+      elevation: 2,
     },
-    cardHeader: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 12,
-    },
-    cardTitle: {
-      fontSize: 17,
-      fontWeight: "700",
-      color: textMain,
-    },
-    aboutInput: {
+
+    aboutText: {
       fontSize: 15,
-      color: "#374151",
+      color: textMain,
       lineHeight: 22,
-      minHeight: 80,
-      textAlignVertical: "top",
-    },
-    mutedText: {
-      fontSize: 14,
-      color: textMuted,
     },
   });
 }

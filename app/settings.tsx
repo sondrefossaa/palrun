@@ -18,6 +18,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system/legacy";
+import * as ImageManipulator from "expo-image-manipulator";
+
 /* ---------- TYPES ---------- */
 
 type ProfileRecord = {
@@ -95,17 +97,27 @@ export default function SettingsScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
+        base64: false,
       });
 
       if (result.canceled || result.assets.length === 0) return;
 
       const localUri = result.assets[0].uri;
-      const filename = localUri.split("/").pop()!;
-      const fileExt = filename.split(".").pop();
-      const supabasePath = `avatars/${user.id}_${Date.now()}.${fileExt}`;
 
-      // Legacy readAsStringAsync
-      const base64 = await FileSystem.readAsStringAsync(localUri, {
+      // convert to JPEG to avoid format issues
+      const manipResult = await ImageManipulator.manipulateAsync(localUri, [], {
+        compress: 0.7,
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+
+      const supabasePath = `avatars/${user.id}-${Date.now()}.jpg`;
+
+      // delete old avatar if exists
+      const oldFilename = supabasePath;
+      await supabase.storage.from("avatars").remove([oldFilename]);
+
+      // read file as base64
+      const base64 = await FileSystem.readAsStringAsync(manipResult.uri, {
         encoding: "base64",
       });
 
@@ -121,8 +133,21 @@ export default function SettingsScreen() {
         .from("avatars")
         .getPublicUrl(supabasePath);
 
-      setAvatarUrl(publicUrlData.publicUrl);
-      Alert.alert("Success", "Avatar updated!");
+      const baseUrl = publicUrlData.publicUrl;
+      const newAvatarUrl = baseUrl;
+
+      // Update the avatar_url in state
+      setAvatarUrl(newAvatarUrl);
+
+      // Update the avatar_url in the database
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: newAvatarUrl })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      Alert.alert("Success", "Avatar updated successfully!");
     } catch (err) {
       console.error("Image upload failed:", err);
       Alert.alert("Upload failed", "Could not upload image. Try again.");
