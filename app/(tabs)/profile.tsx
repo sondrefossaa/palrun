@@ -94,9 +94,7 @@ export default function Profile() {
             <View style={styles.headerTopActions}>
               <View style={styles.headerTextContainer}>
                 <Text style={styles.headerName}>{profileStats.full_name}</Text>
-                <Text style={styles.headerLocation}>
-                  {profileStats.location}
-                </Text>
+                <Text style={styles.shortDesc}>{profileStats.short_desc}</Text>
               </View>
 
               <TouchableOpacity
@@ -189,7 +187,8 @@ function StatBubble({
 /* ---------- STYLES ---------- */
 
 function useDynamicStyles() {
-  const brandGreen = "#DA7756";
+  // Old color #DA7756
+  const brandGreen = "#ee6e3b";
   const lightBg = "#F7F7F7";
   const surface = "#FFFFFF";
   const textMain = "#1A1A1A";
@@ -244,7 +243,7 @@ function useDynamicStyles() {
       fontWeight: "700",
     },
 
-    headerLocation: {
+    shortDesc: {
       color: "rgba(255,255,255,0.85)",
       fontSize: 14,
       marginTop: 2,
