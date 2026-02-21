@@ -13,7 +13,7 @@ import { Region } from "react-native-maps";
 
 import { Run, Filter } from "@/types";
 import { supabase } from "@/lib/supabase";
-import RunDisplay from "@/components/run/run-display";
+import RunDisplay from "@/components/run/run-display-old";
 import FilterModal from "@/components/filter-modal";
 import { mainColor } from "@/constants/theme";
 

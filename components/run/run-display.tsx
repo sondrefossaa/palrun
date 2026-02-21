@@ -1,250 +1,210 @@
-import { mainColor } from "@/constants/theme";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  ScrollView,
-} from "react-native";
-import { Run } from "@/types/index";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { View, Image, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { RunWithCreator } from "@/types/index";
 
-interface RunDisplayProps {
-  selectedRun: Run;
-  onClose: () => void;
-}
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleString();
+};
 
-export default function RunDisplay({ selectedRun, onClose }: RunDisplayProps) {
+const getInitials = (name: string) => {
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+};
+export default function RunDisplay({ run }: { run: RunWithCreator }) {
+  const creator = run.creator;
+  const creatorName =
+    creator?.full_name || creator?.username || "Unknown runner";
+  const distanceLabel =
+    typeof run.distance === "number" ? `${run.distance.toFixed(1)} km` : "N/A";
+  const paceLabel =
+    typeof run.pace === "number" ? `${run.pace.toFixed(2)} min/km` : "N/A";
+  const startLabel = formatDateTime(run.start_time);
+
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={true}
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={onClose}
-        />
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerIcon}>
-              <MaterialCommunityIcons name="run" size={32} color="white" />
-            </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close-circle" size={32} color="#ddd" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Content */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            <Text style={styles.title}>{selectedRun.title}</Text>
-
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Ionicons name="time-outline" size={16} color="#666" />
-                <Text style={styles.metaText}>
-                  {selectedRun.startTime || "TBD"}
-                </Text>
-              </View>
-              <View style={styles.metaDivider} />
-              <View style={styles.metaItem}>
-                <Ionicons name="location-outline" size={16} color="#666" />
-                <Text style={styles.metaText}>
-                  {selectedRun.lat.toFixed(4)}, {selectedRun.lng.toFixed(4)}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>
-              {selectedRun.description || "No description provided."}
+    <SafeAreaView style={styles.mainContainer}>
+      <View style={styles.headerRow}>
+        {creator?.avatar_url ? (
+          <Image source={{ uri: creator.avatar_url }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatarFallback}>
+            <Text style={styles.avatarFallbackText}>
+              {getInitials(creatorName)}
             </Text>
-
-            <Text style={styles.sectionTitle}>Run Details</Text>
-            <View style={styles.statsGrid}>
-              <View style={styles.statBox}>
-                <MaterialCommunityIcons
-                  name="map-marker-distance"
-                  size={24}
-                  color={mainColor}
-                />
-                <Text style={styles.statValue}>{selectedRun.distance} km</Text>
-                <Text style={styles.statLabel}>Distance</Text>
-              </View>
-              <View style={styles.statBox}>
-                <MaterialCommunityIcons
-                  name="speedometer"
-                  size={24}
-                  color={mainColor}
-                />
-                <Text style={styles.statValue}>{selectedRun.pace} /km</Text>
-                <Text style={styles.statLabel}>Pace</Text>
-              </View>
-            </View>
-          </ScrollView>
-
-          {/* Footer Action */}
-          <View style={styles.footer}>
-            <TouchableOpacity style={styles.actionButton} onPress={onClose}>
-              <Text style={styles.actionButtonText}>Join Run</Text>
-            </TouchableOpacity>
           </View>
+        )}
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{run.title}</Text>
+          <Text style={styles.creator}>Hosted by {creatorName}</Text>
         </View>
       </View>
-    </Modal>
+
+      <Text style={styles.description}>{run.description}</Text>
+
+      <View style={styles.metaRow}>
+        <View style={styles.metaItem}>
+          <Text style={styles.metaLabel}>Location</Text>
+          <Text style={styles.metaValue}>{run.location}</Text>
+        </View>
+        <View style={styles.metaItem}>
+          <Text style={styles.metaLabel}>Start</Text>
+          <Text style={styles.metaValue}>{startLabel}</Text>
+        </View>
+      </View>
+
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Distance</Text>
+          <Text style={styles.statValue}>{distanceLabel}</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Pace</Text>
+          <Text style={styles.statValue}>{paceLabel}</Text>
+        </View>
+      </View>
+
+      <View style={styles.actionsRow}>
+        <TouchableOpacity style={styles.primaryButton}>
+          <Text style={styles.primaryButtonText}>Join run</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.secondaryButton}>
+          <Text style={styles.secondaryButtonText}>Details</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  mainContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 20,
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  container: {
-    backgroundColor: "white",
-    borderRadius: 24,
-    maxHeight: "80%",
-    width: "100%",
-    maxWidth: 400,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
-    overflow: "hidden",
-  },
-  header: {
-    height: 80,
-    backgroundColor: mainColor,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    alignItems: "center",
-  },
-  headerIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "#fff",
     borderRadius: 12,
-    justifyContent: "center",
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
   },
-  closeButton: {
-    padding: 5,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingTop: 10,
+  headerText: {
+    flex: 1,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#1a1a1a",
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  creator: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#E5E7EB",
+  },
+  avatarFallback: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#111827",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarFallbackText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  description: {
+    fontSize: 14,
+    color: "#374151",
+    lineHeight: 20,
+    marginBottom: 14,
   },
   metaRow: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-    backgroundColor: "#f5f5f5",
-    padding: 12,
-    borderRadius: 12,
+    gap: 12,
+    marginBottom: 12,
   },
   metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  metaDivider: {
-    width: 1,
-    height: 16,
-    backgroundColor: "#ccc",
-    marginHorizontal: 12,
-  },
-  metaText: {
-    fontSize: 14,
-    color: "#444",
-    fontWeight: "500",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 8,
-    marginTop: 8,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: "#666",
-    marginBottom: 24,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    gap: 16,
-    marginBottom: 24,
-  },
-  statBox: {
     flex: 1,
-    backgroundColor: "#FFF5F2",
-    borderRadius: 16,
-    padding: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(218, 119, 86, 0.2)",
+    backgroundColor: "#F9FAFB",
+    padding: 10,
+    borderRadius: 10,
   },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: mainColor,
-    marginTop: 8,
+  metaLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+  metaValue: {
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "600",
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "#EEF2FF",
+    padding: 12,
+    borderRadius: 10,
   },
   statLabel: {
     fontSize: 12,
-    color: "#666",
-    marginTop: 4,
+    color: "#4F46E5",
+    marginBottom: 6,
   },
-  footer: {
-    padding: 24,
-    paddingTop: 0,
-  },
-  actionButton: {
-    backgroundColor: mainColor,
-    borderRadius: 16,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: mainColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  actionButtonText: {
-    color: "white",
-    fontSize: 18,
+  statValue: {
+    fontSize: 16,
     fontWeight: "700",
+    color: "#111827",
+  },
+  actionsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: "#111827",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  primaryButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: "#F3F4F6",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  secondaryButtonText: {
+    color: "#111827",
+    fontWeight: "700",
+    fontSize: 14,
   },
 });

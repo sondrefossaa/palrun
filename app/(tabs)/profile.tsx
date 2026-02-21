@@ -188,7 +188,8 @@ function StatBubble({
 
 function useDynamicStyles() {
   // Old color #DA7756
-  const brandGreen = "#ee6e3b";
+  // Newer but still old color "#ee6e3b"
+  const brandGreen = "#2e8b57";
   const lightBg = "#F7F7F7";
   const surface = "#FFFFFF";
   const textMain = "#1A1A1A";
